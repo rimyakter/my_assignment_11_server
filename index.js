@@ -36,6 +36,15 @@ async function run() {
 }
 run().catch(console.dir);
 const usersCollection = client.db("B2BWholesale").collection("users");
+const productsCollection = client.db("B2BWholesale").collection("products");
+
+//Products Related API
+app.get("/products", async (req, res) => {
+  const category = req.query.category;
+  const filter = category ? { category: category } : {};
+  const result = await productsCollection.find(filter).toArray();
+  res.send(result);
+});
 
 //Users related API
 app.post("/users", async (req, res) => {
