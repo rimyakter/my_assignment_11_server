@@ -41,12 +41,37 @@ const ordersCollection = client.db("B2BWholesale").collection("orders");
 
 //Products Related API
 
+// app.get("/products", async (req, res) => {
+//   const category = req.query.category;
+//   const filter = category ? { category: category } : {};
+//   const result = await productsCollection.find(filter).toArray();
+//   res.send(result);
+// });
+
+// ✅ Products Related API
 app.get("/products", async (req, res) => {
-  const category = req.query.category;
-  const filter = category ? { category: category } : {};
-  const result = await productsCollection.find(filter).toArray();
-  res.send(result);
+  try {
+    const category = req.query.category;
+    const userEmail = req.query.email; // 👈 capture email from query
+
+    let filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (userEmail) {
+      filter.userEmail = userEmail; // 👈 filter by email if provided
+    }
+
+    const result = await productsCollection.find(filter).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).send({ message: "Failed to fetch products" });
+  }
 });
+
 //Add product API
 
 // Add a new product
@@ -93,12 +118,26 @@ app.get("/products/:productId", async (req, res) => {
   const result = await productsCollection.findOne(query);
   res.send(result);
 });
-// Update a product || Update product API
+// ✅ Update a product || Update product API
 app.put("/products/:productId", async (req, res) => {
   const id = req.params.productId;
   const updatedData = req.body;
 
   try {
+    // Ensure numeric fields are numbers
+    if (updatedData.minQty !== undefined) {
+      updatedData.minQty = Number(updatedData.minQty);
+    }
+    if (updatedData.price !== undefined) {
+      updatedData.price = Number(updatedData.price);
+    }
+    if (updatedData.rating !== undefined) {
+      updatedData.rating = Number(updatedData.rating);
+    }
+    if (updatedData.mainQuantity !== undefined) {
+      updatedData.mainQuantity = Number(updatedData.mainQuantity);
+    }
+
     const result = await productsCollection.updateOne(
       { _id: new ObjectId(id) },
       { $set: updatedData }
@@ -142,7 +181,11 @@ app.post("/orders", async (req, res) => {
     const order = {
       productId: product._id,
       productName: product.name,
-      quantity,
+      productImage: product.image,
+      category: product.category,
+      description: product.description,
+      minBuyQty: Number(product.minQty),
+      quantity: Number(quantity),
       buyerName,
       buyerEmail,
       phone,
@@ -169,6 +212,37 @@ app.post("/orders", async (req, res) => {
       .status(500)
       .send({ message: "Failed to place order", error: err.message });
   }
+});
+
+// ================== Cart APIs ================== //
+
+// Get all orders for a specific user (their "cart")
+app.get("/cart/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = { buyerEmail: email };
+  const result = await ordersCollection.find(filter).toArray();
+  res.send(result);
+});
+
+// Remove an order (cancel/remove from cart)
+app.delete("/cart/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
+  // Find the order first
+  const order = await ordersCollection.findOne({
+    _id: new ObjectId(orderId),
+  });
+
+  // Restore the product stock using $inc
+  await productsCollection.updateOne(
+    { _id: new ObjectId(order.productId) },
+    { $inc: { mainQuantity: order.quantity } } // ✅ restore stock
+  );
+
+  // Delete the order
+  await ordersCollection.deleteOne({ _id: new ObjectId(orderId) });
+
+  res.send({ message: "Order removed and stock updated" });
 });
 
 //Users related API
