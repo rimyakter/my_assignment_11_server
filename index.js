@@ -196,7 +196,7 @@ app.post("/orders", async (req, res) => {
     );
 
     res.send({
-      message: "Order placed successfully",
+      message: "Your order placed successfully",
       orderId: result.insertedId,
     });
   } catch (err) {
@@ -235,7 +235,7 @@ app.delete("/cart/:orderId", async (req, res) => {
   // Delete the order
   await ordersCollection.deleteOne({ _id: new ObjectId(orderId) });
 
-  res.send({ message: "Order removed and stock updated" });
+  res.send({ message: "Order removed/canceled and stock updated" });
 });
 
 //Users related API
