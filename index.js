@@ -39,15 +39,6 @@ const usersCollection = client.db("B2BWholesale").collection("users");
 const productsCollection = client.db("B2BWholesale").collection("products");
 const ordersCollection = client.db("B2BWholesale").collection("orders");
 
-//Products Related API
-
-// app.get("/products", async (req, res) => {
-//   const category = req.query.category;
-//   const filter = category ? { category: category } : {};
-//   const result = await productsCollection.find(filter).toArray();
-//   res.send(result);
-// });
-
 // ✅ Products Related API
 app.get("/products", async (req, res) => {
   try {
@@ -149,7 +140,6 @@ app.put("/products/:productId", async (req, res) => {
 
     res.send({ message: "Product updated successfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).send({ message: "Failed to update product", error: err });
   }
 });
