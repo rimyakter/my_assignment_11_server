@@ -155,7 +155,10 @@ app.post("/orders", async (req, res) => {
     const id = { _id: new ObjectId(productId) };
     const product = await productsCollection.findOne(id);
 
-    if (!product) return res.status(404).send({ message: "Product not found" });
+    if (!product)
+      return res
+        .status(404)
+        .send({ message: "Product not found or not added yet" });
 
     if (quantity < product.minQty) {
       return res
